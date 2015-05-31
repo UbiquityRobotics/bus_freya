@@ -1,10 +1,11 @@
 // Copyright (c) 2014-2015 by Wayne C. Gramlich.  All rights reserved.
 //
-// This code drives the bus_beagle_bone_black board.
+// This code drives the Frey robot.
 
 #include <Bus_Slave.h>
 #include <Frame_Buffer.h>
 #include <bus_server.h>
+#include <RAB_Sonar.h>
 
 #define TEST TEST_RAB_FREYA
 
@@ -49,6 +50,37 @@ void Freya_Motor_Encoder::encoder_set(Integer encoder) {
   _bus_slave->flush();
 }
 
+class Freya_RAB_Sonar : RAB_Sonar {
+ public:
+  Freya_RAB_Sonar();
+  virtual Short ping_get(UByte x);
+  virtual Short system_debug_flags_get();
+  virtual void system_debug_flags_set(Short system_debug_flags);
+  virtual UByte sonars_count_get();
+ private:
+  UByte system_debug_flags_;
+};
+
+Freya_RAB_Sonar::Freya_RAB_Sonar() {
+  system_debug_flags_ = 0;
+}
+
+Short Freya_RAB_Sonar::ping_get(UByte sonar) {
+  return 0;
+}
+
+Short Freya_RAB_Sonar::system_debug_flags_get() {
+  return system_debug_flags_;
+}
+
+void Freya_RAB_Sonar::system_debug_flags_set(Short system_debug_flags) {
+  system_debug_flags_ = system_debug_flags;
+}
+
+UByte Freya_RAB_Sonar::sonars_count_get() {
+  return 20;
+}
+
 // The *setup* routine runs on power up and when you press reset:
 
 // Define the UART's:
@@ -77,10 +109,12 @@ Bus_Slave bus_slave((UART *)bus_uart, (UART *)host_uart);
 static const UShort address = 33;
 Freya_Motor_Encoder left_motor_encoder(&bus_slave, address, 2, 3, 9);
 Freya_Motor_Encoder right_motor_encoder(&bus_slave, address, 4, 5, 11);
+Freya_RAB_Sonar freya_rab_sonar;
 
 Bridge bridge(&avr_uart0, &avr_uart1, &avr_uart0, &bus_slave,
  (Bus_Motor_Encoder *)&left_motor_encoder,
- (Bus_Motor_Encoder *)&right_motor_encoder);
+ (Bus_Motor_Encoder *)&right_motor_encoder,
+ (RAB_Sonar *)&freya_rab_sonar);
 
 void setup() {
   pinMode(BUS_STANDBY, OUTPUT);
