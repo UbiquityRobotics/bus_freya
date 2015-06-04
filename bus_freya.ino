@@ -63,8 +63,7 @@ class Freya_RAB_Sonar : RAB_Sonar {
 };
 
 Freya_RAB_Sonar::Freya_RAB_Sonar(UART *debug_uart, Bus_Slave *bus_slave) :
- RAB_Sonar(debug_uart)
-  {
+ RAB_Sonar(debug_uart) {
   bus_slave_ = bus_slave;
   system_debug_flags_ = 0;
 }
