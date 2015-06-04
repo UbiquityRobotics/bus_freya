@@ -52,21 +52,46 @@ void Freya_Motor_Encoder::encoder_set(Integer encoder) {
 
 class Freya_RAB_Sonar : RAB_Sonar {
  public:
-  Freya_RAB_Sonar();
+  Freya_RAB_Sonar(UART *debug_uart, Bus_Slave *bus_slave);
   virtual Short ping_get(UByte x);
   virtual Short system_debug_flags_get();
   virtual void system_debug_flags_set(Short system_debug_flags);
   virtual UByte sonars_count_get();
  private:
+  Bus_Slave *bus_slave_;
   UByte system_debug_flags_;
 };
 
-Freya_RAB_Sonar::Freya_RAB_Sonar() {
+Freya_RAB_Sonar::Freya_RAB_Sonar(UART *debug_uart, Bus_Slave *bus_slave) :
+ RAB_Sonar(debug_uart)
+  {
+  bus_slave_ = bus_slave;
   system_debug_flags_ = 0;
 }
 
 Short Freya_RAB_Sonar::ping_get(UByte sonar) {
-  return 0;
+  static const UByte front_address = 40;
+  static const UByte rear_address = 40;
+
+  // Figure out whether to use the front or read sonar modules:
+  UByte half_sonars_count = sonars_count_get() >> 1;
+  UByte address = front_address;
+  if (sonar >= half_sonars_count) {
+    sonar -= half_sonars_count;
+    address = rear_address;
+  }
+
+  // Select the appropriate *sonar* for the appropriate module:
+  bus_slave_->command_ubyte_put(address, 9, sonar);
+
+  // Read the distance back:
+  UByte select = bus_slave_->command_ubyte_get(address, 8);
+  //debug_uart_->string_print((Text)" [");
+  //debug_uart_->integer_print((Integer)select);
+  //debug_uart_->string_print((Text)"]:");
+  UShort distance = bus_slave_->command_ushort_get(address, 10);
+  //debug_uart_->integer_print((Integer)distance);
+  return (Short)distance;
 }
 
 Short Freya_RAB_Sonar::system_debug_flags_get() {
@@ -109,7 +134,7 @@ Bus_Slave bus_slave((UART *)bus_uart, (UART *)host_uart);
 static const UShort address = 33;
 Freya_Motor_Encoder left_motor_encoder(&bus_slave, address, 2, 3, 9);
 Freya_Motor_Encoder right_motor_encoder(&bus_slave, address, 4, 5, 11);
-Freya_RAB_Sonar freya_rab_sonar;
+Freya_RAB_Sonar freya_rab_sonar(debug_uart, &bus_slave);
 
 Bridge bridge(&avr_uart0, &avr_uart1, &avr_uart0, &bus_slave,
  (Bus_Motor_Encoder *)&left_motor_encoder,
