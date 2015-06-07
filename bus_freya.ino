@@ -1,11 +1,12 @@
 // Copyright (c) 2014-2015 by Wayne C. Gramlich.  All rights reserved.
 //
-// This code drives the Frey robot.
+// This code drives the Freya robot.
 
 #include <Bus_Slave.h>
 #include <Frame_Buffer.h>
 #include <bus_server.h>
 #include <RAB_Sonar.h>
+#include <Sonar.h>
 
 #define TEST TEST_RAB_FREYA
 
@@ -53,22 +54,22 @@ void Freya_Motor_Encoder::encoder_set(Integer encoder) {
 class Freya_RAB_Sonar : RAB_Sonar {
  public:
   Freya_RAB_Sonar(UART *debug_uart, Bus_Slave *bus_slave);
-  virtual Short ping_get(UByte x);
-  virtual Short system_debug_flags_get();
-  virtual void system_debug_flags_set(Short system_debug_flags);
+  virtual UShort ping_get(UByte sonar_index);
+  virtual UShort debug_flags_get();
+  virtual void debug_flags_set(UShort debug_flags);
   virtual UByte sonars_count_get();
  private:
   Bus_Slave *bus_slave_;
-  UByte system_debug_flags_;
+  UByte debug_flags_;
 };
 
 Freya_RAB_Sonar::Freya_RAB_Sonar(UART *debug_uart, Bus_Slave *bus_slave) :
  RAB_Sonar(debug_uart) {
   bus_slave_ = bus_slave;
-  system_debug_flags_ = 0;
+  debug_flags_ = 0;
 }
 
-Short Freya_RAB_Sonar::ping_get(UByte sonar) {
+UShort Freya_RAB_Sonar::ping_get(UByte sonar) {
   static const UByte front_address = 40;
   static const UByte rear_address = 40;
 
@@ -84,7 +85,7 @@ Short Freya_RAB_Sonar::ping_get(UByte sonar) {
   bus_slave_->command_ubyte_put(address, 9, sonar);
 
   // Read the distance back:
-  UByte select = bus_slave_->command_ubyte_get(address, 8);
+  //UByte select = bus_slave_->command_ubyte_get(address, 8);
   //debug_uart_->string_print((Text)" [");
   //debug_uart_->integer_print((Integer)select);
   //debug_uart_->string_print((Text)"]:");
@@ -93,12 +94,12 @@ Short Freya_RAB_Sonar::ping_get(UByte sonar) {
   return (Short)distance;
 }
 
-Short Freya_RAB_Sonar::system_debug_flags_get() {
-  return system_debug_flags_;
+UShort Freya_RAB_Sonar::debug_flags_get() {
+  return debug_flags_;
 }
 
-void Freya_RAB_Sonar::system_debug_flags_set(Short system_debug_flags) {
-  system_debug_flags_ = system_debug_flags;
+void Freya_RAB_Sonar::debug_flags_set(UShort debug_flags) {
+  debug_flags_ = debug_flags;
 }
 
 UByte Freya_RAB_Sonar::sonars_count_get() {
