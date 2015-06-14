@@ -70,7 +70,7 @@ Freya_RAB_Sonar::Freya_RAB_Sonar(UART *debug_uart, Bus_Slave *bus_slave) :
 }
 
 UShort Freya_RAB_Sonar::ping_get(UByte sonar) {
-  static const UByte front_address = 40;
+  static const UByte front_address = 41;
   static const UByte rear_address = 40;
 
   // Figure out whether to use the front or read sonar modules:
