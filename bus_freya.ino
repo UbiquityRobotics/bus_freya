@@ -16,39 +16,56 @@ class Freya_Motor_Encoder : Bus_Motor_Encoder {
  public:
   Freya_Motor_Encoder(Bus_Slave *bus_slave, UShort address, 
    UByte encoder_get_command, UByte encoder_set_command,
-   UByte pwm_set_command);
+   UByte pwm_set_command, Logical pwm_invert, Logical encoder_invert);
   Integer encoder_get();
   void encoder_set(Integer encoder);
   void pwm_set(Byte pwm);
  private:
-  UShort _address;
-  Bus_Slave *_bus_slave;
-  UByte _encoder_get_command;
-  UByte _encoder_set_command;
-  UByte _pwm_set_command;
+  UShort address_;
+  Bus_Slave *bus_slave_;
+  UByte encoder_get_command_;
+  Logical encoder_invert_;
+  UByte encoder_set_command_;
+  Logical pwm_invert_;
+  UByte pwm_set_command_;
 };
 
 Freya_Motor_Encoder::Freya_Motor_Encoder(Bus_Slave *bus_slave, UShort address,
- UByte encoder_get_command, UByte encoder_set_command, UByte pwm_set_command) {
-  _address = address;
-  _bus_slave = bus_slave;
-  _encoder_get_command = encoder_get_command;
-  _encoder_set_command = encoder_set_command;
-  _pwm_set_command = pwm_set_command;
+ UByte encoder_get_command, UByte encoder_set_command, UByte pwm_set_command,
+ Logical pwm_invert, Logical encoder_invert) {
+  address_ = address;
+  bus_slave_ = bus_slave;
+  encoder_get_command_ = encoder_get_command;
+  encoder_invert_ = encoder_invert;
+  encoder_set_command_ = encoder_set_command;
+  pwm_invert_ = pwm_invert;
+  pwm_set_command_ = pwm_set_command;
 }
 
 void Freya_Motor_Encoder::pwm_set(Byte pwm) {
-  _bus_slave->command_byte_put(_address, _pwm_set_command, pwm);
-  _bus_slave->flush();
+  if (pwm_invert_) {
+    pwm = -pwm;
+  }
+  bus_slave_->command_byte_put(address_, pwm_set_command_, pwm);
+  bus_slave_->flush();
 }
 
 Integer Freya_Motor_Encoder::encoder_get() {
-  return _bus_slave->command_integer_get(_address, _encoder_get_command);
+  Integer encoder_value = 
+   bus_slave_->command_integer_get(address_, encoder_get_command_);
+  if (encoder_invert_) {
+    encoder_value = -encoder_value;
+  }
+  return encoder_value;
 }
 
-void Freya_Motor_Encoder::encoder_set(Integer encoder) {
-  _bus_slave->command_integer_put(_address, _encoder_set_command, encoder);
-  _bus_slave->flush();
+void Freya_Motor_Encoder::encoder_set(Integer encoder_value) {
+  if (encoder_invert_) {
+    encoder_value = -encoder_value;
+  }
+  bus_slave_->command_integer_put(
+   address_, encoder_set_command_, encoder_value);
+  bus_slave_->flush();
 }
 
 class Freya_RAB_Sonar : RAB_Sonar {
@@ -132,8 +149,10 @@ void system_debug_flags_set(int flags) {
 
 Bus_Slave bus_slave((UART *)bus_uart, (UART *)host_uart);
 static const UShort address = 33;
-Freya_Motor_Encoder left_motor_encoder(&bus_slave, address, 2, 3, 9);
-Freya_Motor_Encoder right_motor_encoder(&bus_slave, address, 4, 5, 11);
+Freya_Motor_Encoder left_motor_encoder(
+ &bus_slave, address, 2, 3, 9, (Logical)0, (Logical)0);
+Freya_Motor_Encoder right_motor_encoder(
+ &bus_slave, address, 4, 5, 11, (Logical)0, (Logical)0);
 Freya_RAB_Sonar freya_rab_sonar(debug_uart, &bus_slave);
 
 Bridge bridge(&avr_uart0, &avr_uart1, &avr_uart0, &bus_slave,
