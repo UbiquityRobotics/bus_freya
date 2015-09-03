@@ -75,6 +75,8 @@ class Freya_RAB_Sonar : RAB_Sonar {
   virtual UShort debug_flags_get();
   virtual void debug_flags_set(UShort debug_flags);
   virtual UByte sonars_count_get();
+  virtual void queue_poll(UART *host_uart,
+   UInteger time_base, UByte id_offset);
  private:
   Bus_Slave *bus_slave_;
   UByte debug_flags_;
@@ -121,6 +123,12 @@ void Freya_RAB_Sonar::debug_flags_set(UShort debug_flags) {
 
 UByte Freya_RAB_Sonar::sonars_count_get() {
   return 20;
+}
+
+void Freya_RAB_Sonar::queue_poll(UART *host_uart,
+ UInteger time_base, UByte id_offset) {
+  // For now this is busted!!!
+  //sonars_controller.queue_poll(host_uart, time_base, id_offset);
 }
 
 // The *setup* routine runs on power up and when you press reset:
